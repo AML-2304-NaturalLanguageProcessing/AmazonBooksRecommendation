@@ -1,5 +1,3 @@
 pandas
 pymongo
 azure-storage-blob
-Notice:  A new release of pip is available: 24.0 -> 24.1
-Notice:  To update, run: pip install --upgrade pip
