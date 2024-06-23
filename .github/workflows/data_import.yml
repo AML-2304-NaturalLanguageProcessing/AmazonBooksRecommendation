@@ -1,0 +1,35 @@
+import pandas as pd
+from pymongo import MongoClient
+import os
+from azure.storage.blob import BlobServiceClient
+
+# Connect to Azure Blob Storage
+blob_service_client = BlobServiceClient.from_connection_string(os.getenv("AZURE_STORAGE_CONNECTION_STRING"))
+blob_client_reviews = blob_service_client.get_blob_client(container="almnlp", blob="Books_rating.csv")
+blob_client_books = blob_service_client.get_blob_client(container="almnlp", blob="books_data.csv")
+
+# Download the blobs as local files
+with open("Books_rating.csv", "wb") as download_file:
+    download_file.write(blob_client_reviews.download_blob().readall())
+with open("books_data.csv", "wb") as download_file:
+    download_file.write(blob_client_books.download_blob().readall())
+
+# Load CSV files
+reviews_df = pd.read_csv('Books_rating.csv')
+books_df = pd.read_csv('books_data.csv')
+
+# Connect to MongoDB using Azure Cosmos DB connection string
+client = MongoClient(os.getenv("MONGO_CONNECTION_STRING"))
+db = client['BookRecommendationDB']
+
+# Insert Raw Reviews Data
+raw_reviews_collection = db['raw_reviews']
+raw_reviews_data = reviews_df.to_dict(orient='records')
+raw_reviews_collection.insert_many(raw_reviews_data)
+
+# Insert Raw Books Data
+raw_books_collection = db['raw_books']
+raw_books_data = books_df.to_dict(orient='records')
+raw_books_collection.insert_many(raw_books_data)
+
+print("Raw data imported successfully!")
