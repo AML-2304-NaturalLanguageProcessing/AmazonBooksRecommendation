@@ -29,4 +29,4 @@ jobs:
         AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
       run: |
-        python scripts/import_raw_data.py
+        python ./scripts/import_raw_data.py
