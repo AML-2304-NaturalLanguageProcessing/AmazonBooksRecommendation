@@ -1,4 +1,4 @@
-name: Data Import and Processing
+name: Data Import from Azure Blob Storage to Azure Cosmos MongoDB
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Import Data to Cosmos MongoDB
+    - name: Import Data to Azure Cosmos MongoDB
       env:
         AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
