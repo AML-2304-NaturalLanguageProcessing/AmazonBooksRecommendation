@@ -1,35 +1,32 @@
-import pandas as pd
-from pymongo import MongoClient
-import os
-from azure.storage.blob import BlobServiceClient
+name: Data Processing Workflow
 
-# Connect to Azure Blob Storage
-blob_service_client = BlobServiceClient.from_connection_string(os.getenv("AZURE_STORAGE_CONNECTION_STRING"))
-blob_client_reviews = blob_service_client.get_blob_client(container="almnlp", blob="Books_rating.csv")
-blob_client_books = blob_service_client.get_blob_client(container="almnlp", blob="books_data.csv")
+on:
+  push:
+    paths:
+      - 'data/**'
+      - 'notebooks/**'
+  workflow_dispatch:
 
-# Download the blobs as local files
-with open("Books_rating.csv", "wb") as download_file:
-    download_file.write(blob_client_reviews.download_blob().readall())
-with open("books_data.csv", "wb") as download_file:
-    download_file.write(blob_client_books.download_blob().readall())
+jobs:
+  import-and-process-data:
+    runs-on: ubuntu-latest
 
-# Load CSV files
-reviews_df = pd.read_csv('Books_rating.csv')
-books_df = pd.read_csv('books_data.csv')
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-# Connect to MongoDB using Azure Cosmos DB connection string
-client = MongoClient(os.getenv("MONGO_CONNECTION_STRING"))
-db = client['BookRecommendationDB']
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
 
-# Insert Raw Reviews Data
-raw_reviews_collection = db['raw_reviews']
-raw_reviews_data = reviews_df.to_dict(orient='records')
-raw_reviews_collection.insert_many(raw_reviews_data)
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
-# Insert Raw Books Data
-raw_books_collection = db['raw_books']
-raw_books_data = books_df.to_dict(orient='records')
-raw_books_collection.insert_many(raw_books_data)
-
-print("Raw data imported successfully!")
+    - name: Import Raw Data to Cosmos MongoDB
+      env:
+        MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
+      run: |
+        python notebooks/import_raw_data.ipynb
