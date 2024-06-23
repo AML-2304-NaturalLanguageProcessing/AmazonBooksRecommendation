@@ -24,9 +24,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Import Data to Azure Cosmos MongoDB
+    - name: Import Data to Cosmos MongoDB
       env:
         AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
       run: |
-        python ./scripts/import_raw_data.py
+        python scripts/import_raw_data.py
+      timeout-minutes: 15  # Set a timeout of 15 minutes for this step

@@ -1,3 +1,3 @@
-azure-storage-blob
-pymongo
 pandas
+pymongo
+azure-storage-blob
