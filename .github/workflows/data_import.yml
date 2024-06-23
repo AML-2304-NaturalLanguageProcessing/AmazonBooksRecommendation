@@ -1,4 +1,4 @@
-name: Data Import from Azure Blob Storage to Cosmos MongoDB
+name: Data Import and Processing
 
 on:
   push:
