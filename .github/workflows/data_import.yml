@@ -3,7 +3,7 @@ name: Data Import and Processing
 on:
   push:
     paths:
-      - 'notebooks/**'
+      - 'scripts/**'
   workflow_dispatch:
 
 jobs:
@@ -29,4 +29,4 @@ jobs:
         AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
       run: |
-        python notebooks/import_raw_data.ipynb
+        python scripts/import_raw_data.ipynb
