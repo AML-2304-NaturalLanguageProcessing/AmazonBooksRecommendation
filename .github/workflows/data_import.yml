@@ -1,9 +1,8 @@
-name: Data Processing Workflow
+name: Data Import and Processing
 
 on:
   push:
     paths:
-      - 'data/**'
       - 'notebooks/**'
   workflow_dispatch:
 
@@ -25,8 +24,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Import Raw Data to Cosmos MongoDB
+    - name: Import Data to Cosmos MongoDB
       env:
+        AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
       run: |
         python notebooks/import_raw_data.ipynb
