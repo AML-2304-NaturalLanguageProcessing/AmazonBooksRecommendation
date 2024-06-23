@@ -26,7 +26,7 @@ books_df = read_blob_to_dataframe(blob_service_client, container_name, books_blo
 # MongoDB connection string (Azure Cosmos DB)
 mongo_connection_string = os.getenv("MONGO_CONNECTION_STRING")
 client = MongoClient(mongo_connection_string)
-db = client['AmazonBookReviews']
+db = client['AmazonBooksReviews']
 
 # Insert data into MongoDB collections
 reviews_collection = db['raw_reviews']
