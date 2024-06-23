@@ -16,7 +16,7 @@ azure_storage_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 blob_service_client = BlobServiceClient.from_connection_string(azure_storage_connection_string)
 
 # Read CSV files from Azure Blob Storage into pandas DataFrames
-container_name = "almnlp"
+container_name = "nlpdata"
 reviews_blob_name = "Books_rating.csv"
 books_blob_name = "books_data.csv"
 
