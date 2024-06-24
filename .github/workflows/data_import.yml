@@ -24,12 +24,6 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: List root directory
-      run: ls -la
-
-    - name: List scripts directory
-      run: ls -la scripts
-
     - name: Validate environment variables
       run: |
         if [ -z "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" ]; then
