@@ -24,6 +24,10 @@ jobs:
         python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
+    - name: List scripts directory
+      run: ls -la scripts
+    
+
     - name: Import Data to Cosmos MongoDB
       env:
         AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
