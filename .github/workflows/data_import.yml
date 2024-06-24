@@ -27,7 +27,6 @@ jobs:
     - name: List scripts directory
       run: ls -la scripts
     
-
     - name: Import Data to Cosmos MongoDB
       env:
         AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
