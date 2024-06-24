@@ -15,52 +15,53 @@ def read_blob_to_dataframe(blob_service_client, container_name, blob_name):
         print(f"Error reading blob {blob_name} from container {container_name}: {e}")
         raise
 
-# Azure Blob Storage connection string
-azure_storage_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-if not azure_storage_connection_string:
-    raise ValueError("Azure storage connection string is not set.")
+# Validate connection strings
+def validate_connection_strings():
+    azure_storage_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    mongo_connection_string = os.getenv("MONGO_CONNECTION_STRING")
 
+    if not azure_storage_connection_string:
+        raise ValueError("AZURE_STORAGE_CONNECTION_STRING is not set or empty.")
+    if not mongo_connection_string:
+        raise ValueError("MONGO_CONNECTION_STRING is not set or empty.")
+
+    return azure_storage_connection_string, mongo_connection_string
+
+# Main script
 try:
+    # Validate connection strings
+    azure_storage_connection_string, mongo_connection_string = validate_connection_strings()
+    print("Successfully retrieved connection strings.")
+
+    # Initialize BlobServiceClient
     blob_service_client = BlobServiceClient.from_connection_string(azure_storage_connection_string)
-    print("Successfully connected to Azure Blob Storage.")
-except Exception as e:
-    print(f"Failed to connect to Azure Blob Storage: {e}")
-    raise
+    print("Connected to Azure Blob Storage.")
 
-# Read CSV files from Azure Blob Storage into pandas DataFrames
-container_name = "nlpdata"
-reviews_blob_name = "Books_rating.csv"
-books_blob_name = "books_data.csv"
+    # Read CSV files from Azure Blob Storage into pandas DataFrames
+    container_name = "nlpdata"
+    reviews_blob_name = "Books_rating.csv"
+    books_blob_name = "books_data.csv"
 
-try:
     reviews_df = read_blob_to_dataframe(blob_service_client, container_name, reviews_blob_name)
+    print("Successfully read reviews data from blob storage.")
     books_df = read_blob_to_dataframe(blob_service_client, container_name, books_blob_name)
-    print("Successfully read data from Azure Blob Storage.")
-except Exception as e:
-    print(f"Error reading data from Azure Blob Storage: {e}")
-    raise
+    print("Successfully read books data from blob storage.")
 
-# MongoDB connection string (Azure Cosmos DB)
-mongo_connection_string = os.getenv("MONGO_CONNECTION_STRING")
-if not mongo_connection_string:
-    raise ValueError("MongoDB connection string is not set.")
-
-try:
+    # Initialize MongoDB client
     client = MongoClient(mongo_connection_string)
     db = client['AmazonBooksReviews']
-    print("Successfully connected to Azure Cosmos DB.")
-except Exception as e:
-    print(f"Failed to connect to Azure Cosmos DB: {e}")
-    raise
+    print("Connected to Azure Cosmos DB.")
 
-# Insert data into MongoDB collections
-try:
+    # Insert data into MongoDB collections
     reviews_collection = db['raw_reviews']
     books_collection = db['raw_books']
-    
+
     reviews_collection.insert_many(reviews_df.to_dict(orient='records'))
+    print("Successfully inserted reviews data into MongoDB.")
     books_collection.insert_many(books_df.to_dict(orient='records'))
-    print("Data imported successfully into Azure Cosmos DB.")
+    print("Successfully inserted books data into MongoDB.")
+
+    print("Data import completed successfully.")
 except Exception as e:
-    print(f"Error importing data into Azure Cosmos DB: {e}")
+    print(f"An error occurred: {e}")
     raise
