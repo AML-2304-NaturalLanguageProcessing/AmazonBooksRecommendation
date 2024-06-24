@@ -25,8 +25,9 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Import Data to Cosmos MongoDB
-      run: python scripts/import_data.py
-      timeout-minutes: 15  # Set a timeout of 15 minutes for this step
+      run: |
+        python ./scripts/import_raw_data.py
       env:
         AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
+      timeout-minutes: 15  # Set a timeout of 15 minutes for this step
