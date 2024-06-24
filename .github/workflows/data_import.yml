@@ -32,14 +32,14 @@ jobs:
 
     - name: Validate environment variables
       run: |
-        if [ -z "$AZURE_STORAGE_CONNECTION_STRING" ]; then
+        if [ -z "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" ]; then
           echo "AZURE_STORAGE_CONNECTION_STRING is not set"
           exit 1
         else
           echo "AZURE_STORAGE_CONNECTION_STRING is set"
         fi
 
-        if [ -z "$MONGO_CONNECTION_STRING" ]; then
+        if [ -z "${{ secrets.MONGO_CONNECTION_STRING }}" ]; then
           echo "MONGO_CONNECTION_STRING is not set"
           exit 1
         else
