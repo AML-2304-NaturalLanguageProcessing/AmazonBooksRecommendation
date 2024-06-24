@@ -17,39 +17,17 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.10'
+        python-version: '^3.10'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-    - name: List root directory
-      run: ls -la
-
-    - name: List scripts directory
-      run: ls -la scripts
-
-    - name: Validate environment variables
-      run: |
-        if [ -z "$AZURE_STORAGE_CONNECTION_STRING" ]; then
-          echo "AZURE_STORAGE_CONNECTION_STRING is not set"
-          exit 1
-        else
-          echo "AZURE_STORAGE_CONNECTION_STRING is set"
-        fi
-
-        if [ -z "$MONGO_CONNECTION_STRING" ]; then
-          echo "MONGO_CONNECTION_STRING is not set"
-          exit 1
-        else
-          echo "MONGO_CONNECTION_STRING is set"
-        fi
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Import Data to Cosmos MongoDB
       env:
         AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
       run: |
-        python scripts/import_raw_data.py
+        python ./scripts/import_raw_data.py
       timeout-minutes: 15  # Set a timeout of 15 minutes for this step
