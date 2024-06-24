@@ -24,12 +24,10 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: List directory contents
+    - name: Verify script path
       run: |
-        echo "Listing root directory:"
-        ls -la
-        echo "Listing scripts directory:"
-        ls -la scripts
+        echo "Checking if script exists at scripts/import_raw_data.py"
+        if [ -f scripts/import_raw_data.py ]; then echo "Script found!"; else echo "Script not found!"; fi
 
     - name: Import Data to Cosmos MongoDB
       env:
@@ -37,4 +35,4 @@ jobs:
         MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
       run: |
         python scripts/import_raw_data.py
-      timeout-minutes: 5
+      timeout-minutes: 15  # Set a timeout of 15 minutes for this step
