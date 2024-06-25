@@ -2,6 +2,8 @@ name: Data Import and Processing
 
 on:
   push:
+    branches:
+      - feature/import-csv-to-mongodb
     paths:
       - 'scripts/**'
   workflow_dispatch:
@@ -59,5 +61,5 @@ jobs:
         AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
       run: |
-        python ../scripts/import_raw_data.py
+        python scripts/import_raw_data.py
       timeout-minutes: 15  # Set a timeout of 15 minutes for this step
