@@ -31,7 +31,7 @@ jobs:
     - name: Check if script files exist
       run: |
           if [ ! -f "scripts/import_raw_data.py" ]; then
-            echo "import_raw_data.py does not exist in scripts directory. Please create the file."
+            echo "import_raw_data.py does not exist in scripts directory. Please create the file. Thank you."
             exit 1
           fi
 
@@ -62,4 +62,3 @@ jobs:
         MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
       run: |
         python scripts/import_raw_data.py
-      timeout-minutes: 15  # Set a timeout of 15 minutes for this step
