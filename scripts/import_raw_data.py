@@ -30,6 +30,7 @@ def validate_connection_strings():
 # Main script
 try:
     print("Starting data import...")
+    sys.exit() 
     # Validate connection strings
     azure_storage_connection_string, mongo_connection_string = validate_connection_strings()
     print("Successfully retrieved connection strings.")
