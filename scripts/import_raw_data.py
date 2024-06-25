@@ -34,7 +34,7 @@ def validate_connection_strings():
     return azure_storage_connection_string, mongo_connection_string
 
 # Function to insert or update documents with retry mechanism
-def upsert_documents_with_retry(collection, document, max_retries=5, initial_delay=2):  # Increased initial delay to 2 seconds
+def upsert_documents_with_retry(collection, document, max_retries=3, initial_delay=5):  # Increased initial delay to 2 seconds
     for attempt in range(max_retries):
         try:
             collection.update_one({'id': document['id']}, {'$set': document}, upsert=True)
