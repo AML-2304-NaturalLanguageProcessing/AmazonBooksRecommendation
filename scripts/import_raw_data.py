@@ -1,6 +1,7 @@
 import pandas as pd
 import uuid
 from pymongo import MongoClient, errors
+from pymongo.operations import UpdateOne
 from azure.storage.blob import BlobServiceClient
 import os
 from io import StringIO
@@ -26,27 +27,27 @@ def validate_connection_strings():
     azure_storage_connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
     mongo_connection_string = os.getenv("MONGO_CONNECTION_STRING")
 
-    if not azure_storage_connection_string:
-        raise ValueError("AZURE_STORAGE_CONNECTION_STRING is not set or empty.")
-    if not mongo_connection_string:
-        raise ValueError("MONGO_CONNECTION_STRING is not set or empty.")
+    if not azure_storage_connection_string or not mongo_connection_string:
+        raise ValueError("One or more connection strings are not set or empty.")
 
     return azure_storage_connection_string, mongo_connection_string
 
-# Function to insert or update documents with retry mechanism
-def upsert_documents_with_retry(collection, document, max_retries=3, initial_delay=5):  # Increased initial delay to 2 seconds
-    for attempt in range(max_retries):
-        try:
-            collection.update_one({'id': document['id']}, {'$set': document}, upsert=True)
-            break  # Exit the retry loop if successful
-        except errors.WriteError as e:
-            print(f"Write error on attempt {attempt + 1}: {e.details}")
-            if attempt < max_retries - 1:
-                delay = initial_delay * (2 ** attempt)
-                print(f"Retrying in {delay} seconds...")
-                time.sleep(delay)
-            else:
-                raise
+# Function to bulk upsert documents with retry mechanism
+def bulk_upsert_with_retry(collection, documents, max_retries=3, batch_size=500):
+    for i in range(0, len(documents), batch_size):
+        batch = documents[i:i+batch_size]
+        operations = [UpdateOne({'id': doc['id']}, {'$set': doc}, upsert=True) for doc in batch]
+        for attempt in range(max_retries):
+            try:
+                collection.bulk_write(operations, ordered=False)
+                break  # Exit the retry loop if successful
+            except errors.BulkWriteError as bwe:
+                print(f"Bulk write error on attempt {attempt + 1}: {bwe.details}")
+                time.sleep(5 * (2 ** attempt))  # Exponential back-off
+            except Exception as e:
+                print(f"An error occurred on attempt {attempt + 1}: {e}")
+                if attempt == max_retries - 1:
+                    raise  # Raise the error if the last retry fails
 
 # Main script
 try:
@@ -65,42 +66,19 @@ try:
     db = client['AmazonBooksReviews']
     print("Connected to Azure Cosmos DB.")
 
-    # Read CSV files from Azure Blob Storage into pandas DataFrames
-    container_name = "nlpdata"
-    books_blob_name = "books_data.csv"
-    reviews_blob_name = "Books_rating.csv"
-
     # Process books data
-    books_df = read_blob_to_dataframe(blob_service_client, container_name, books_blob_name)
-    print("Successfully read books data from blob storage.")
-
-    # Generate UUID for each record in books data
+    books_df = read_blob_to_dataframe(blob_service_client, "nlpdata", "books_data.csv")
     books_df['id'] = [str(uuid.uuid4()) for _ in books_df.index]
-
-    # Ensure the books collection is created with the id field as the partition key
     if 'raw_books' not in db.list_collection_names():
         db.create_collection('raw_books', shard_key={'id': 'hashed'})
-    books_collection = db['raw_books']
-
-    # Upsert books data into MongoDB with retry mechanism, processing each document individually
-    for document in books_df.to_dict(orient='records'):
-        upsert_documents_with_retry(books_collection, document)
+    bulk_upsert_with_retry(db['raw_books'], books_df.to_dict(orient='records'))
 
     # Process reviews data
-    reviews_df = read_blob_to_dataframe(blob_service_client, container_name, reviews_blob_name)
-    print("Successfully read reviews data from blob storage.")
-
-    # Generate UUID for each record in reviews data
+    reviews_df = read_blob_to_dataframe(blob_service_client, "nlpdata", "Books_rating.csv")
     reviews_df['id'] = [str(uuid.uuid4()) for _ in reviews_df.index]
-
-    # Ensure the reviews collection is created with the id field as the partition key
     if 'raw_reviews' not in db.list_collection_names():
         db.create_collection('raw_reviews', shard_key={'id': 'hashed'})
-    reviews_collection = db['raw_reviews']
-
-    # Upsert reviews data into MongoDB with retry mechanism, processing each document individually
-    for document in reviews_df.to_dict(orient='records'):
-        upsert_documents_with_retry(reviews_collection, document)
+    bulk_upsert_with_retry(db['raw_reviews'], reviews_df.to_dict(orient='records'))
 
     print("Data import completed successfully.")
 except Exception as e:

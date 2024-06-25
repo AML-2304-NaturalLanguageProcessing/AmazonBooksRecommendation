@@ -24,7 +24,7 @@ jobs:
     - name: Check if scripts directory exists
       run: |
           if [ ! -d "scripts" ]; then
-            echo "scripts directory does not exist. Please create the directory.Thank you."
+            echo "scripts directory does not exist."
             exit 1
           fi
 
@@ -43,14 +43,14 @@ jobs:
     - name: Validate environment variables
       run: |
           if [ -z "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" ]; then
-            echo "AZURE_STORAGE_CONNECTION_STRING is not set"
+            echo "AZURE_STORAGE_CONNECTION_STRING is not set."
             exit 1
           else
             echo "AZURE_STORAGE_CONNECTION_STRING is set"
           fi
 
           if [ -z "${{ secrets.MONGO_CONNECTION_STRING }}" ]; then
-            echo "MONGO_CONNECTION_STRING is not set"
+            echo "MONGO_CONNECTION_STRING is not set. Check secret at repository settings."
             exit 1
           else
             echo "MONGO_CONNECTION_STRING is set"
