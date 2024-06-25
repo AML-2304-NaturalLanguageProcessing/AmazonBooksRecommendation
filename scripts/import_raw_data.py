@@ -31,7 +31,7 @@ def validate_connection_strings():
 # Main script
 try:
     print("Starting data import...")
-    sys.exit() 
+    # sys.exit() 
     # Validate connection strings
     azure_storage_connection_string, mongo_connection_string = validate_connection_strings()
     print("Successfully retrieved connection strings.")
@@ -39,7 +39,7 @@ try:
     # Initialize BlobServiceClient
     blob_service_client = BlobServiceClient.from_connection_string(azure_storage_connection_string)
     print("Connected to Azure Blob Storage.")
-
+    # sys.exit() 
     # Read CSV files from Azure Blob Storage into pandas DataFrames
     container_name = "nlpdata"
     reviews_blob_name = "Books_rating.csv"
