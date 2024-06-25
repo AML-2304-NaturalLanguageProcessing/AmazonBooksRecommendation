@@ -62,3 +62,4 @@ jobs:
         MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
       run: |
         python scripts/import_raw_data.py
+      timeout-minutes: 1440 #Set a timeout of 24 hours
