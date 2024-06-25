@@ -1,11 +1,11 @@
 import pandas as pd
 import uuid
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 from azure.storage.blob import BlobServiceClient
 import os
 from io import StringIO
 from dotenv import load_dotenv
-import sys
+import time
 
 # Load environment variables from .env file
 load_dotenv()
@@ -32,6 +32,22 @@ def validate_connection_strings():
         raise ValueError("MONGO_CONNECTION_STRING is not set or empty.")
 
     return azure_storage_connection_string, mongo_connection_string
+
+# Function to insert documents with retry mechanism
+def insert_documents_with_retry(collection, documents, max_retries=5, initial_delay=1):
+    for attempt in range(max_retries):
+        try:
+            collection.insert_many(documents)
+            print("Successfully inserted documents into MongoDB.")
+            return
+        except errors.BulkWriteError as e:
+            print(f"Bulk write error on attempt {attempt + 1}: {e.details}")
+            if attempt < max_retries - 1:
+                delay = initial_delay * (2 ** attempt)
+                print(f"Retrying in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                raise
 
 # Main script
 try:
@@ -67,9 +83,9 @@ try:
         db.create_collection('raw_books', shard_key={'id': 'hashed'})
     books_collection = db['raw_books']
 
-    # Insert books data into MongoDB
-    books_collection.insert_many(books_df.to_dict(orient='records'))
-    print("Successfully inserted books data into MongoDB.")
+    # Insert books data into MongoDB with retry mechanism
+    books_documents = books_df.to_dict(orient='records')
+    insert_documents_with_retry(books_collection, books_documents)
 
     # Process reviews data
     reviews_df = read_blob_to_dataframe(blob_service_client, container_name, reviews_blob_name)
@@ -83,9 +99,9 @@ try:
         db.create_collection('raw_reviews', shard_key={'id': 'hashed'})
     reviews_collection = db['raw_reviews']
 
-    # Insert reviews data into MongoDB
-    reviews_collection.insert_many(reviews_df.to_dict(orient='records'))
-    print("Successfully inserted reviews data into MongoDB.")
+    # Insert reviews data into MongoDB with retry mechanism
+    reviews_documents = reviews_df.to_dict(orient='records')
+    insert_documents_with_retry(reviews_collection, reviews_documents)
 
     print("Data import completed successfully.")
 except Exception as e:

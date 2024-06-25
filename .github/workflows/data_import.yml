@@ -24,7 +24,7 @@ jobs:
     - name: Check if scripts directory exists
       run: |
           if [ ! -d "scripts" ]; then
-            echo "scripts directory does not exist."
+            echo "scripts directory does not exist. Please create the directory."
             exit 1
           fi
 
