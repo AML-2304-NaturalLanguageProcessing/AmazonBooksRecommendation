@@ -54,11 +54,12 @@ try:
     
     books_df = read_blob_to_dataframe(blob_service_client, container_name, books_blob_name)
     print("Successfully read books data from blob storage.")
-    sys.exit()    
     books_collection = db['raw_books']
+    print(books_df.head(2))
     
     books_collection.insert_many(books_df.to_dict(orient='records'))
     print("Successfully inserted books data into MongoDB.")
+    sys.exit()    
     
     reviews_df = read_blob_to_dataframe(blob_service_client, container_name, reviews_blob_name)
     print("Successfully read reviews data from blob storage.")

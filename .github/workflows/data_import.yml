@@ -31,7 +31,7 @@ jobs:
     - name: Check if script files exist
       run: |
           if [ ! -f "scripts/import_raw_data.py" ]; then
-            echo "import_raw_data.py does not exist in scripts directory or empty."
+            echo "import_raw_data.py does not exist in scripts directory."
             exit 1
           fi
 
