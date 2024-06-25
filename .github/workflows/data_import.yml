@@ -3,7 +3,7 @@ name: Data Import and Processing
 on:
   push:
     paths:
-      - '../scripts/**'
+      - 'scripts/**'
   workflow_dispatch:
 
 jobs:
