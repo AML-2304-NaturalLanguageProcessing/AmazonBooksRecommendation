@@ -21,9 +21,9 @@ def validate_connection_strings():
     mongo_connection_string = os.getenv("MONGO_CONNECTION_STRING")
 
     if not azure_storage_connection_string:
-        raise ValueError("AZURE_STORAGE_CONNECTION_STRING is not set or empty.")
+        raise ValueError("AZURE_STORAGE_CONNECTION_STRING is not set.")
     if not mongo_connection_string:
-        raise ValueError("MONGO_CONNECTION_STRING is not set or empty.")
+        raise ValueError("MONGO_CONNECTION_STRING is not set.")
 
     return azure_storage_connection_string, mongo_connection_string
 
