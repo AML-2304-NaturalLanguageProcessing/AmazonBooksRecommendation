@@ -34,20 +34,19 @@ def validate_connection_strings():
     return azure_storage_connection_string, mongo_connection_string
 
 # Function to insert or update documents with retry mechanism
-def upsert_documents_with_retry(collection, documents, max_retries=5, initial_delay=1):
-    for document in documents:
-        for attempt in range(max_retries):
-            try:
-                collection.update_one({'id': document['id']}, {'$set': document}, upsert=True)
-                break  # Exit the retry loop if successful
-            except errors.WriteError as e:
-                print(f"Write error on attempt {attempt + 1}: {e.details}")
-                if attempt < max_retries - 1:
-                    delay = initial_delay * (2 ** attempt)
-                    print(f"Retrying in {delay} seconds...")
-                    time.sleep(delay)
-                else:
-                    raise
+def upsert_documents_with_retry(collection, document, max_retries=5, initial_delay=2):  # Increased initial delay to 2 seconds
+    for attempt in range(max_retries):
+        try:
+            collection.update_one({'id': document['id']}, {'$set': document}, upsert=True)
+            break  # Exit the retry loop if successful
+        except errors.WriteError as e:
+            print(f"Write error on attempt {attempt + 1}: {e.details}")
+            if attempt < max_retries - 1:
+                delay = initial_delay * (2 ** attempt)
+                print(f"Retrying in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                raise
 
 # Main script
 try:
@@ -83,9 +82,9 @@ try:
         db.create_collection('raw_books', shard_key={'id': 'hashed'})
     books_collection = db['raw_books']
 
-    # Upsert books data into MongoDB with retry mechanism
-    books_documents = books_df.to_dict(orient='records')
-    upsert_documents_with_retry(books_collection, books_documents)
+    # Upsert books data into MongoDB with retry mechanism, processing each document individually
+    for document in books_df.to_dict(orient='records'):
+        upsert_documents_with_retry(books_collection, document)
 
     # Process reviews data
     reviews_df = read_blob_to_dataframe(blob_service_client, container_name, reviews_blob_name)
@@ -99,11 +98,10 @@ try:
         db.create_collection('raw_reviews', shard_key={'id': 'hashed'})
     reviews_collection = db['raw_reviews']
 
-    # Upsert reviews data into MongoDB with retry mechanism
-    reviews_documents = reviews_df.to_dict(orient='records')
-    upsert_documents_with_retry(reviews_collection, reviews_documents)
+    # Upsert reviews data into MongoDB with retry mechanism, processing each document individually
+    for document in reviews_df.to_dict(orient='records'):
+        upsert_documents_with_retry(reviews_collection, document)
 
     print("Data import completed successfully.")
 except Exception as e:
-    print(f"An error occurred: {e}")
-    raise
+   
