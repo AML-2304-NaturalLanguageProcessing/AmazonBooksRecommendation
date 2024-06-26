@@ -50,7 +50,7 @@ jobs:
           fi
 
           if [ -z "${{ secrets.MONGO_CONNECTION_STRING }}" ]; then
-            echo "MONGO_CONNECTION_STRING is not set. Check secret at repository settings."
+            echo "MONGO_CONNECTION_STRING is not set."
             exit 1
           else
             echo "MONGO_CONNECTION_STRING is set"
