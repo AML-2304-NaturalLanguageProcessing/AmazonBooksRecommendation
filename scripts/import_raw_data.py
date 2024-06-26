@@ -70,20 +70,21 @@ try:
     books_blob_name = "books_data.csv"
     reviews_blob_name = "Books_rating.csv"
 
-    # Process books data
-    books_df = read_blob_to_dataframe(blob_service_client, container_name, books_blob_name)
-    print("Successfully read books data from blob storage.")
+#Commenting out the books data import as we are already imported it
+    # # Process books data
+    # books_df = read_blob_to_dataframe(blob_service_client, container_name, books_blob_name)
+    # print("Successfully read books data from blob storage.")
 
-    # Use DataFrame index as the id for each record in books data
-    books_df['id'] = books_df.index.astype(str)
+    # # Use DataFrame index as the id for each record in books data
+    # books_df['id'] = books_df.index.astype(str)
 
-    # Ensure the books collection is created with the id field as the unique key
-    books_collection = db['raw_books']
-    books_collection.create_index([('id', 1)], unique=True)
+    # # Ensure the books collection is created with the id field as the unique key
+    # books_collection = db['raw_books']
+    # books_collection.create_index([('id', 1)], unique=True)
 
-    # Upsert books data into MongoDB with retry mechanism
-    books_documents = books_df.to_dict(orient='records')
-    upsert_documents_with_retry(books_collection, books_documents)
+    # # Upsert books data into MongoDB with retry mechanism
+    # books_documents = books_df.to_dict(orient='records')
+    # upsert_documents_with_retry(books_collection, books_documents)
 
     # Process reviews data
     reviews_df = read_blob_to_dataframe(blob_service_client, container_name, reviews_blob_name)
@@ -100,7 +101,7 @@ try:
     reviews_documents = reviews_df.to_dict(orient='records')
     upsert_documents_with_retry(reviews_collection, reviews_documents)
 
-    print("Data import completed successfully.")
+    print("Book Reviews import completed successfully.")
 except Exception as e:
     print(f"An error occurred: {e}")
     raise

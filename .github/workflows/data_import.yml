@@ -46,7 +46,7 @@ jobs:
             echo "AZURE_STORAGE_CONNECTION_STRING is not set."
             exit 1
           else
-            echo "AZURE_STORAGE_CONNECTION_STRING is set"
+            echo "AZURE_STORAGE_CONNECTION_STRING is set. Please kindly check the connection string."
           fi
 
           if [ -z "${{ secrets.MONGO_CONNECTION_STRING }}" ]; then
