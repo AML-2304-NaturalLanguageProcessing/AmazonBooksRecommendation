@@ -61,13 +61,15 @@ try:
     print("Connected to Azure Blob Storage.")
 
     # Initialize MongoDB client
+    print("Initializing MongoDB client...")
     client = MongoClient(mongo_connection_string)
+    print("Successfully initialized MongoDB client.")
     db = client['AmazonBooksReviews']
     print("Connected to MongoDB.")
 
     # Read CSV files from Azure Blob Storage into pandas DataFrames
     container_name = "nlpdata"
-    books_blob_name = "books_data.csv"
+    # books_blob_name = "books_data.csv"
     reviews_blob_name = "Books_rating.csv"
 
 #Commenting out the books data import as we are already imported it
