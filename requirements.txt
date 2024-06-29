@@ -1,0 +1,3 @@
+pandas
+pymongo
+azure-storage-blob
