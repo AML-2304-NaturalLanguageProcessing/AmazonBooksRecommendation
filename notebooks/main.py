@@ -23,8 +23,6 @@ If you encounter permission issues when installing the package:
     > pip install --user azure-storage-blob
 Using jupyter to run the ipynb file:
     > pip install jupyter or pip install --upgrade jupyter nbconvert
-Find the full path to the jupyter.exe and replace in 'jupyter_path' in function run_notebook()
-    > where jupyter 
 To execute Jupyter notebooks without converting them to another format:
     > pip install nbclient
 

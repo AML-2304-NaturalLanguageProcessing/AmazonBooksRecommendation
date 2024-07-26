@@ -12,7 +12,7 @@ class SampleDataset:
             books_rating_df = pd.read_csv(self.books_rating_file)
             
             # Perform an inner join on the 'Title' column
-            self.merged_df = pd.merge(books_data_df, books_rating_df, on='Title', how='inner', validate="one_to_many")
+            self.merged_df = pd.merge(books_data_df, books_rating_df, on='Title', how='outer', validate="one_to_many")
             print(f"Files merged successfully. Shape: {self.merged_df.shape}")
         except Exception as e:
             print(f"Error merging files: {e}")
