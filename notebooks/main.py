@@ -11,9 +11,7 @@ from nbclient import NotebookClient
 from nbclient.exceptions import CellExecutionError
 
 '''
-TODO: Please Read...
-
-Libraries that need to be installed:
+Included in requirements.txt are the libraries that need to be installed:
 If you are using Python 3 and the pip command defaults to Python 2, use pip3 instead:
     > pip install azure-storage-blob 
     > pip3 install azure-storage-blob
@@ -26,10 +24,10 @@ Using jupyter to run the ipynb file:
 To execute Jupyter notebooks without converting them to another format:
     > pip install nbclient
 
-To get the 100 samples from dataset, in terminal run:"
-> python main.py 100
+To get the 10 samples from dataset, in terminal run:"
+> python main.py 10
 
-Sammple Output:
+Sample Output:
 $ python main.py 10
 Credentials loaded successfully
 Connected to Azure Blob Storage successfully
@@ -38,28 +36,17 @@ Books_rating.csv already exists.
 Files merged successfully. Shape: (3000000, 19)
 Sample of 10 rows obtained successfully.
 Sample Dataset saved to sample_dataset_10_20240726_095929.csv
-[NbConvertApp] Converting notebook amazon-books-data-preprocessing.ipynb to notebook
 0.01s - Debugger warning: It seems that frozen modules are being used, which may
 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
 ....
-[NbConvertApp] Writing 72258 bytes to amazon-books-data-preprocessing.nbconvert.ipynb
 Notebook amazon-books-data-preprocessing.ipynb executed successfully.
 Preprocessing notebook executed successfully. Now running feature extraction notebook...
 [NbConvertApp] Converting notebook feature-extraction.ipynb to notebook
 ...
-[NbConvertApp] Writing 16214 bytes to feature-extraction.nbconvert.ipynb
 Notebook feature-extraction.ipynb executed successfully.
 Feature extraction notebook executed successfully.
 Connection to Azure Blob Storage closed...
 '''
-
-# Save the dataframe to a file
-def save_dataframe(df, filename):
-    try:
-        df.to_csv(filename, index=False)
-        print(f"Sample Dataset saved to {filename}")
-    except Exception as e:
-        print(f"Error saving sample: {e}")
 
 # To execute Jupyter notebooks without converting them to another format
 def run_notebook(notebook_path, filename=None):
@@ -89,6 +76,15 @@ def main(num_sample):
     container_name = "nlpdata/raw" 
     books_data_file = "books_data.csv"  
     books_rating_file = "Books_rating.csv" 
+    base_dir = "datasets"
+
+    # Ensure the base directory exists
+    if not os.path.exists(base_dir):
+        os.makedirs(base_dir)
+
+    # Define paths for the files
+    books_data_file_path = os.path.join(base_dir, books_data_file)
+    books_rating_file_path = os.path.join(base_dir, books_rating_file)
 
     # Create an instance of AzureConnection, load credentials and connect
     azure_connection = AzureConnection(credentials_file)
@@ -100,24 +96,24 @@ def main(num_sample):
     file_reader = FileReader(azure_connection)   
 
     # Check if books_data_file exist before downloading
-    if not os.path.exists(books_data_file):
+    if not os.path.exists(books_data_file_path):
         print(f"Downloading {books_data_file} start...")
         file_reader.download_blob_to_file(container_name, books_data_file)    
     else:
         print(f"{books_data_file} already exists.")
     
     # Check if books_rating_file exist before downloading
-    if not os.path.exists(books_rating_file):
+    if not os.path.exists(books_rating_file_path):
         print(f"Downloading {books_rating_file} start...")
         file_reader.download_blob_to_file(container_name, books_rating_file) 
     else:
         print(f"{books_rating_file} already exists.")
 
     # Check if files were downloaded successfully
-    if os.path.exists(books_data_file) and os.path.exists(books_rating_file):
+    if os.path.exists(books_data_file_path) and os.path.exists(books_rating_file_path):
 
         # Create an instance of SampleDataset and merge files
-        sample_dataset = SampleDataset(books_data_file, books_rating_file)
+        sample_dataset = SampleDataset(books_data_file_path, books_rating_file_path)
         sample_dataset.merge_files()
 
         # Generate filename with current date and time
@@ -126,8 +122,9 @@ def main(num_sample):
         
         # Get a sample of the merged data
         sample_df = sample_dataset.get_sample(num_samples=num_sample)
+
         if sample_df is not None:
-            save_dataframe(sample_df, filename)
+            file_reader.save_dataframe(sample_df, filename)
             
             # Run the preprocessing notebook
             if run_notebook('amazon-books-data-preprocessing.ipynb', filename=filename):
@@ -135,11 +132,20 @@ def main(num_sample):
                 # Run the feature extraction notebook
                 if run_notebook('feature-extraction.ipynb'):
                     print("Feature extraction notebook executed successfully.")
+                    # Run the emotion analysis notebook
+                    if run_notebook('emotion-analysis.ipynb'):
+                        print("Emotion Analysis notebook executed successfully.")
+                        # Run the featur enengineering notebook
+                        if run_notebook('feature_engineering.ipynb'):
+                            print("Feature Engineering notebook executed successfully.")
+                        else:
+                            print("Failed to execute feature engineering notebook.")
+                    else:
+                        print("Failed to execute emotion analysis notebook.")
                 else:
                     print("Failed to execute feature extraction notebook.")
             else:
-                print("Failed to execute preprocessing notebook.")
-                    
+                print("Failed to execute preprocessing notebook.")                    
         else:
             print("Failed to create sample. Exiting...")
     
