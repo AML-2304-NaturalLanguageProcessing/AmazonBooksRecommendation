@@ -1,7 +1,7 @@
 '''
 Steps:
 Replace with your actual account name and key
-Using terminal type: python save_credentials.py
+Using terminal type: python savecredential.py
 '''
 
 import pickle
