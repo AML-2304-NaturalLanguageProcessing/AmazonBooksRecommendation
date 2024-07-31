@@ -55,6 +55,7 @@ def run_notebook(notebook_path, filename=None):
             nb = nbformat.read(f, as_version=4)
         
         if filename:
+            print(filename + " is set as the SAMPLE_DATA_FILENAME environment variable.")
             os.environ["SAMPLE_DATA_FILENAME"] = filename
         
         client = NotebookClient(nb)
@@ -69,14 +70,14 @@ def run_notebook(notebook_path, filename=None):
         print(f"Unexpected error: {e}")
         return False
     
-def main(num_sample):
-    credentials_file = "azure_credentials.pkl"
+def load_preprocess_data(num_sample):
+    credentials_file = "scripts/azure_credentials.pkl"
     
     # Replace with your container name and file name
     container_name = "nlpdata" 
     books_data_file = "books_data.csv"  
     books_rating_file = "Books_rating.csv" 
-    base_dir = "datasets"
+    base_dir = "data"
 
     # Create an instance of AzureConnection, load credentials and connect
     azure_connection = AzureConnection(credentials_file)
@@ -161,4 +162,4 @@ if __name__ == "__main__":
     parser.add_argument('num_samples', type=int, help='Number of samples to retrieve from the merged data...')
 
     args = parser.parse_args()
-    main(args.num_samples)
+    load_preprocess_data(args.num_samples)
