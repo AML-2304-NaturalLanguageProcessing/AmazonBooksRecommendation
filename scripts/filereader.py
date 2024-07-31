@@ -64,7 +64,7 @@ class FileReader:
         except Exception as e:
             print(f"Error saving sample: {e}")
 
-    def datasets_directory(self, folder='datasets'):
+    def datasets_directory(self, folder='data'):
         
         # Define the base path for the directory
         base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', folder))
