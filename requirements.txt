@@ -1,7 +1,11 @@
 pandas
 pymongo
 azure-storage-blob
-
-azure-storage-blob
 jupyter
 nbclient
+shap
+lime
+nltk
+gensim
+transformers
+scipy

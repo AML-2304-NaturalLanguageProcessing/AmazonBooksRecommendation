@@ -50,13 +50,13 @@ Connection to Azure Blob Storage closed...
 
 # To execute Jupyter notebooks without converting them to another format
 def run_notebook(notebook_path, filename=None):
-    try:
-        with open(notebook_path) as f:
-            nb = nbformat.read(f, as_version=4)
-        
+    try:        
         if filename:
             print(filename + " is set as the SAMPLE_DATA_FILENAME environment variable.")
             os.environ["SAMPLE_DATA_FILENAME"] = filename
+
+        with open(notebook_path) as f:
+            nb = nbformat.read(f, as_version=4)
         
         client = NotebookClient(nb)
         client.execute()
@@ -71,7 +71,7 @@ def run_notebook(notebook_path, filename=None):
         return False
     
 def load_preprocess_data(num_sample):
-    credentials_file = "scripts/azure_credentials.pkl"
+    credentials_file = "azure_credentials.pkl"
     
     # Replace with your container name and file name
     container_name = "nlpdata" 

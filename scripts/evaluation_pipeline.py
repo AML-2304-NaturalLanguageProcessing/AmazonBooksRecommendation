@@ -30,35 +30,43 @@ def get_feature_names(review_embedding_dim):
     return feature_names
 
 def prepare_data_for_interpretation():
-    load_preprocess_data(1000)
+    load_preprocess_data(10)
     user_item_interactions, emotion_labels, review_embeddings = load_data()
     num_users, num_items, num_emotions = get_data_info(user_item_interactions, emotion_labels)
     review_embedding_dim = review_embeddings.shape[1]
-    
-    # Combine all features into a single numpy array
-    X = np.column_stack((
-        user_item_interactions[:, 0],  # user_id
-        user_item_interactions[:, 1],  # item_id
-        emotion_labels,
-        review_embeddings
-    ))
-    
+    X = NCFDataset(user_item_interactions, emotion_labels, review_embeddings)
+
     return X, num_users, num_items, num_emotions, review_embedding_dim
 
 # Define the complete pipeline
 def pipeline(X):
-    num_users, num_items, num_emotions, review_embedding_dim, _ = prepare_data_for_interpretation()
+    _, num_users, num_items, num_emotions, review_embedding_dim = prepare_data_for_interpretation()
     embedding_size = 32
     mlp_dims=[256, 128, 64]
     model = NCF(num_users, num_items, num_emotions, review_embedding_dim, embedding_size, mlp_dims)
-    
-    user = torch.tensor(X[:, 0], dtype=torch.long)
-    item = torch.tensor(X[:, 1], dtype=torch.long)
-    emotion = torch.tensor(X[:, 2], dtype=torch.long)
-    review_emb = torch.tensor(X[:, 3:], dtype=torch.float)
-    
+    # Load your trained model weights here
+    model.load_state_dict(torch.load('../models/NCF_model.pth', map_location=torch.device('cpu')))
+    user, item, emotion, review_embedding, _ = X
+    print('Original shapes:')
+    print('user shape', user.shape)
+    print('item shape', item.shape)
+    print('emotion shape', emotion.shape)
+    print('review_emb shape', review_embedding.shape)
+    print('---------------------------------------')
+    model.eval() 
+    # Convert inputs to tensors with appropriate dimensions
+    user = torch.tensor(user, dtype=torch.long).view(1, 1)  # Shape: (1, 1)
+    item = torch.tensor(item, dtype=torch.long).view(1, 1)  # Shape: (1, 1)
+    emotion = torch.tensor(emotion, dtype=torch.long).view(1, -1)  # Shape: (1, num_emotions)
+    review_emb = torch.tensor(review_embedding, dtype=torch.float).view(1, -1)  # Shape: (1, embedding_dim)
+    print('Transformed shapes:')
+    print('user shape', user.shape)
+    print('item shape', item.shape)
+    print('emotion shape', emotion.shape)
+    print('review_emb shape', review_emb.shape)
     with torch.no_grad():
         predictions = model(user, item, emotion, review_emb)
+        print('predictions', predictions)
     
     return predictions.numpy()
 
@@ -78,7 +86,7 @@ def shap_explain(X_background):
 # Function for local interpretation
 def interpret_prediction(instance, X):
     # Make prediction
-    prediction = pipeline(instance.reshape(1, -1))[0]
+    prediction = pipeline(instance)[0]
     
     # Get LIME explanation
     lime_exp = lime_explain(instance, X)
@@ -102,6 +110,7 @@ X, num_users, num_items, num_emotions, review_embedding_dim = prepare_data_for_i
 
 # Local interpretation
 instance = X[0]  # Choose an instance to explain
+print(instance, 'instance')
 local_results = interpret_prediction(instance, X)
 
 print("Local Interpretation:")

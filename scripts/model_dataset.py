@@ -3,13 +3,12 @@ import torch
 
 def load_data():
     user_book_matrix = load_npz('../working/user_book_matrix.npz')
-    emotion_matrix = load_npz('../workingl/emotion_matrix.npz')
+    emotion_matrix = load_npz('../working/emotion_matrix.npz')
     book_embeddings = load_npz('../working/avg_embeddings_matrix.npz')
     
     return user_book_matrix, emotion_matrix, book_embeddings
 
 def get_data_info(user_item_interactions, emotion_labels):
-    print(user_item_interactions.shape)
     # Get the number of unique users and items
     num_users = user_item_interactions.shape[0]
     num_items = user_item_interactions.shape[1]
