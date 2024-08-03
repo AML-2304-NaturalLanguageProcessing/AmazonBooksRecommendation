@@ -34,7 +34,7 @@ class NCFInterpretationPipeline:
 
     def preprocess_sample(self, sample_data):
         if sample_data is not None:
-            preprocess_data(sample_data, self.filename, self.file_reader)
+            preprocess_data(sample_data, self.filename, self.dataloader.file_reader)
 
     def engineer_features(self):
         user_item_interactions, emotion_labels, review_embeddings = load_data()
@@ -72,16 +72,18 @@ class NCFInterpretationPipeline:
         # Fill NaN values with column mean
         sample_df = sample_df.fillna(sample_df.mean())
 
-        return sample_df
+        # Scale the features
+        sample_data = self.scaler.fit_transform(sample_df)
+
+        return sample_data, sample_df.columns.tolist()
 
     def interpret_with_lime(self, num_samples=1000):
         self.dataloader.load_connection()
         sample_df = self.get_sample_data(num_samples)
        ##TODO feature_names = dataset.get_features()
-        feature_names = sample_df.columns.tolist()
-        # Preprocess the sample data for LIME
-        sample_df = self.preprocess_for_lime(sample_df)
 
+        sample_data, feature_names = self.preprocess_for_lime(sample_df)
+    
         # Convert the sample dataframe to a numpy array
         sample_data = sample_df.to_numpy()
     
@@ -90,7 +92,7 @@ class NCFInterpretationPipeline:
             sample_data,
             feature_names=feature_names,
             class_names=['rating'],
-            quartile_range=True
+            discretize_continuous=False
         )
         # Function that runs the entire pipeline
         def pipeline_predict(input_data):
@@ -100,7 +102,7 @@ class NCFInterpretationPipeline:
         explanations = []
         for i in range(min(num_samples, len(sample_df))):
             exp = explainer.explain_instance(
-                np.array(sample_df[i]), 
+                sample_data[i], 
                 pipeline_predict, 
                 num_features=len(feature_names)
             )
