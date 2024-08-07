@@ -9,6 +9,7 @@ from datetime import datetime
 import nbformat
 from nbclient import NotebookClient
 from nbclient.exceptions import CellExecutionError
+import config
 
 '''
 Included in requirements.txt are the libraries that need to be installed:
@@ -47,6 +48,35 @@ Notebook feature-extraction.ipynb executed successfully.
 Feature extraction notebook executed successfully.
 Connection to Azure Blob Storage closed...
 '''
+# Establish connection to Azure Blob Storage
+def setup_azure_connection():
+    azure_connection = AzureConnection(config.credentials_file)
+    azure_connection.load_credentials()
+    azure_connection.connect()
+    azure_connection.list_blobs(config.container_name)
+    return azure_connection
+
+# Download and read the csv files
+def setup_file_reader(azure_connection):
+    file_reader = FileReader(azure_connection)
+    file_reader.datasets_directory()
+
+    books_data_file_path = os.path.join(file_reader.base_path, config.books_data_file)
+    books_rating_file_path = os.path.join(file_reader.base_path, config.books_rating_file)
+
+    if not os.path.exists(books_data_file_path):
+        print(f"Downloading {config.books_data_file} start...")
+        file_reader.download_blob_to_file(config.container_name, config.books_data_file)
+    else:
+        print(f"{config.books_data_file} already exists.")
+
+    if not os.path.exists(books_rating_file_path):
+        print(f"Downloading {config.books_rating_file} start...")
+        file_reader.download_blob_to_file(config.container_name, config.books_rating_file)
+    else:
+        print(f"{config.books_rating_file} already exists.")
+
+    return file_reader, books_data_file_path, books_rating_file_path
 
 # To execute Jupyter notebooks without converting them to another format
 def run_notebook(notebook_path, filename=None):
@@ -55,6 +85,7 @@ def run_notebook(notebook_path, filename=None):
             nb = nbformat.read(f, as_version=4)
         
         if filename:
+            print(filename + " is set as the SAMPLE_DATA_FILENAME environment variable.")
             os.environ["SAMPLE_DATA_FILENAME"] = filename
         
         client = NotebookClient(nb)
@@ -69,42 +100,11 @@ def run_notebook(notebook_path, filename=None):
         print(f"Unexpected error: {e}")
         return False
     
-def main(num_sample):
-    credentials_file = "azure_credentials.pkl"
-    
-    # Replace with your container name and file name
-    container_name = "nlpdata" 
-    books_data_file = "books_data.csv"  
-    books_rating_file = "Books_rating.csv" 
-    base_dir = "datasets"
+# Passing the number of sample and execute all the notebook from cleaning to feature engineering 
+def load_preprocess_data(num_sample):
 
-    # Create an instance of AzureConnection, load credentials and connect
-    azure_connection = AzureConnection(credentials_file)
-    azure_connection.load_credentials()
-    azure_connection.connect()
-    azure_connection.list_blobs(container_name) 
-
-    # Create an instance of FileReader
-    file_reader = FileReader(azure_connection)  
-    file_reader.datasets_directory()
-
-    # Define paths for the files
-    books_data_file_path = os.path.join(file_reader.base_path, books_data_file)
-    books_rating_file_path = os.path.join(file_reader.base_path, books_rating_file)
-
-    # Check if books_data_file exist before downloading
-    if not os.path.exists(books_data_file_path):
-        print(f"Downloading {books_data_file} start...")
-        file_reader.download_blob_to_file(container_name, books_data_file)    
-    else:
-        print(f"{books_data_file} already exists.")
-    
-    # Check if books_rating_file exist before downloading
-    if not os.path.exists(books_rating_file_path):
-        print(f"Downloading {books_rating_file} start...")
-        file_reader.download_blob_to_file(container_name, books_rating_file) 
-    else:
-        print(f"{books_rating_file} already exists.")
+    azure_connection = setup_azure_connection()
+    file_reader, books_data_file_path, books_rating_file_path = setup_file_reader(azure_connection)
 
     # Check if files were downloaded successfully
     if os.path.exists(books_data_file_path) and os.path.exists(books_rating_file_path):
@@ -154,6 +154,47 @@ def main(num_sample):
     # Close the Azure connection
     azure_connection.close()
 
+# Passing number of sample, execute amazon-books-data-preprocessing, process clean and return the result in dataframe
+def clean_dataset(num_sample):
+    azure_connection = setup_azure_connection()
+    file_reader, books_data_file_path, books_rating_file_path = setup_file_reader(azure_connection)
+
+    if os.path.exists(books_data_file_path) and os.path.exists(books_rating_file_path):
+        sample_dataset = SampleDataset(books_data_file_path, books_rating_file_path)
+        sample_dataset.merge_files()
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'sample_dataset_{num_sample}_{timestamp}.csv'
+        
+        sample_df = sample_dataset.get_sample(num_samples=num_sample)
+
+        if sample_df is not None:
+            file_reader.save_dataframe(sample_df, filename)
+            notebooks_directory = file_reader.datasets_directory(folder='notebooks')
+
+            if run_notebook(f'{notebooks_directory}/amazon-books-data-preprocessing.ipynb', filename=filename):
+                print("Preprocessing notebook executed successfully.")
+
+                # After preprocessing, load data_cleaned.csv and return the dataframe
+                file_reader.base_path = file_reader.datasets_directory()
+                processed_file_path = os.path.join(file_reader.base_path, 'data_cleaned.csv')
+
+                if os.path.exists(processed_file_path):
+                    processed_df = file_reader.load_dataframe(processed_file_path)
+                    azure_connection.close()
+                    return processed_df
+                else:
+                    print(f"Processed file {filename} does not exist.")
+            else:
+                print("Failed to execute preprocessing notebook.")
+        else:
+            print("Failed to create sample. Exiting.")
+    else:
+        print("Books data files are not available.")
+
+    azure_connection.close()
+
+
 if __name__ == "__main__":
     import argparse
     # Set up argument parsing
@@ -161,4 +202,14 @@ if __name__ == "__main__":
     parser.add_argument('num_samples', type=int, help='Number of samples to retrieve from the merged data...')
 
     args = parser.parse_args()
-    main(args.num_samples)
+    load_preprocess_data(args.num_samples)
+
+    # Call clean_dataset function with the number of samples
+    '''
+    processed_df = clean_dataset(args.num_samples)
+    
+    if processed_df is not None:
+        print(processed_df)
+    else:
+        print("Failed to load DataFrame.")
+    '''

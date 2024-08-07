@@ -7,6 +7,7 @@ class FileReader:
         self.azure_connection = azure_connection
         self.base_path = None
 
+    # Read the csv file
     def read_csv(self, container_name, file_name):
         if self.azure_connection.blob_service_client:
             try:
@@ -31,6 +32,7 @@ class FileReader:
             print("Blob service client is not connected. Please call connect() first.")
             return None
         
+    # Download CSV file
     def download_blob_to_file(self, container_name, file_name):
         if self.azure_connection.blob_service_client:
             try:
@@ -54,7 +56,7 @@ class FileReader:
         else:
             print("Blob service client is not connected...")
 
-    # Save the dataframe to a file
+    # Save the dataframe to a csv file
     def save_dataframe(self, df, filename):
         try:
             datasets_dir = self.datasets_directory()
@@ -64,6 +66,7 @@ class FileReader:
         except Exception as e:
             print(f"Error saving sample: {e}")
 
+    # Define the base path for the directory
     def datasets_directory(self, folder='data'):
         
         # Define the base path for the directory
@@ -75,3 +78,18 @@ class FileReader:
             os.makedirs(base_path)
             print(f"Created folder: {base_path}")
         return base_path
+    
+    # Load a dataframe from a file
+    def load_dataframe(self, file_name):
+        try:
+            file_path = os.path.join(self.base_path, file_name)
+            if os.path.exists(file_path):
+                df = pd.read_csv(file_path, on_bad_lines='skip', encoding='utf-8', engine='python', quotechar='"', escapechar='\\')
+                print(f"DataFrame loaded successfully from {file_path}")
+                return df
+            else:
+                print(f"File {file_path} does not exist.")
+                return None
+        except Exception as e:
+            print(f"Error loading DataFrame: {e}")
+            return None
