@@ -194,6 +194,91 @@ def clean_dataset(num_sample):
 
     azure_connection.close()
 
+def feature_extraction(sample_df=None):
+    azure_connection = setup_azure_connection()
+    file_reader, books_data_file_path, books_rating_file_path = setup_file_reader(azure_connection)
+    
+    file_reader.base_path = file_reader.datasets_directory()
+    processed_file_path = os.path.join(file_reader.base_path, 'data_cleaned.csv')
+    # If sample is empty then used the data_cleaned.csv
+    if sample_df is not None:
+        sample_df.to_csv(processed_file_path, index=False)        
+
+    if os.path.exists(processed_file_path):
+        
+        notebooks_directory = file_reader.datasets_directory(folder='notebooks')
+        if run_notebook(f'{notebooks_directory}/feature-extraction.ipynb'):
+            print("Feature extraction notebook executed successfully.")
+
+            # After preprocessing, load and return the dataframe
+            file_reader.base_path = file_reader.datasets_directory()
+            processed_file_path = os.path.join(file_reader.base_path, 'data_embedded.csv')
+
+            if os.path.exists(processed_file_path):
+                processed_df = file_reader.load_dataframe(processed_file_path)
+                azure_connection.close()
+                return processed_df
+        else:
+            print("Failed to execute feature extraction notebook.")              
+    else:
+        print("Source files are not available.")
+
+    azure_connection.close()
+
+def emotion_analysis(sample_df=None):
+    azure_connection = setup_azure_connection()
+    file_reader, books_data_file_path, books_rating_file_path = setup_file_reader(azure_connection)
+
+    file_reader.base_path = file_reader.datasets_directory()
+    processed_file_path = os.path.join(file_reader.base_path, 'books_with_raw_review.csv')
+
+    if sample_df is not None:
+        sample_df.to_csv(processed_file_path, index=False) 
+
+    if os.path.exists(processed_file_path):
+        
+        notebooks_directory = file_reader.datasets_directory(folder='notebooks')
+        if run_notebook(f'{notebooks_directory}/emotion-analysis.ipynb'):
+            print("Emotion analysis notebook executed successfully.")
+
+            # After preprocessing, load and return the dataframe
+            file_reader.base_path = file_reader.datasets_directory()
+            processed_file_path = os.path.join(file_reader.base_path, 'emotion_classified_reviews.csv')
+
+            if os.path.exists(processed_file_path):
+                processed_df = file_reader.load_dataframe(processed_file_path)
+                azure_connection.close()
+                return processed_df
+        else:
+            print("Failed to execute emotion analysis notebook.")              
+    else:
+        print("Source files are not available.")
+
+    azure_connection.close()
+
+def feature_engineering(sample_df=None):
+    azure_connection = setup_azure_connection()
+    file_reader, books_data_file_path, books_rating_file_path = setup_file_reader(azure_connection)
+
+    file_reader.base_path = file_reader.datasets_directory()
+    processed_file_path = os.path.join(file_reader.base_path, 'emotion_classified_reviews.csv')
+
+    # If sample is empty then used the emotion_classified_reviews.csv
+    if sample_df is not None:
+        sample_df.to_csv(processed_file_path, index=False) 
+
+    if os.path.exists(processed_file_path):
+        
+        notebooks_directory = file_reader.datasets_directory(folder='notebooks')
+        if run_notebook(f'{notebooks_directory}/feature_engineering.ipynb'):
+            print("Feature engineering notebook executed successfully.")
+        else:
+            print("Failed to execute feature engineering notebook.")              
+    else:
+        print("Source files are not available.")
+
+    azure_connection.close()
+
 
 if __name__ == "__main__":
     import argparse
@@ -209,7 +294,12 @@ if __name__ == "__main__":
     processed_df = clean_dataset(args.num_samples)
     
     if processed_df is not None:
-        print(processed_df)
+        # If no DataFrame is passed to a function, it will use the existing CSV generated from the previous notebook.
+        feature_extraction()
+        emotion_analysis()
+        feature_engineering()
     else:
         print("Failed to load DataFrame.")
     '''
+    
+    
