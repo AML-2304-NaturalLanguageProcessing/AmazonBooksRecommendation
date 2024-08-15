@@ -29,6 +29,9 @@ class NCF(nn.Module):
         self.item_embedding_mlp = nn.Embedding(num_items, embedding_dim)
         self.emotion_embedding = nn.Embedding(num_emotions, embedding_dim)
         
+        # Personalized Emotional Weighting
+        self.emotion_weight = nn.Parameter(torch.ones(num_users, 1))
+        
         # MF layer
         self.mf_output = embedding_dim
         
@@ -55,9 +58,14 @@ class NCF(nn.Module):
         user_embedding_mlp = self.user_embedding_mlp(user_indices)
         item_embedding_mlp = self.item_embedding_mlp(item_indices)
         emotion_embedding = self.emotion_embedding(emotion_indices)
-        emotion_embedding = self.emotion_embedding(emotion_indices).mean(dim=1)  # Adjusted for mean over emotions
-        mlp_vector = torch.cat([user_embedding_mlp, item_embedding_mlp, emotion_embedding, review_embeddings], dim=-1)
- 
+        
+        # Personalized Emotional Weighting
+        emotion_weight = self.emotion_weight[user_indices]
+        weighted_emotion_embedding = emotion_embedding * emotion_weight.unsqueeze(1)
+        weighted_emotion_embedding = weighted_emotion_embedding.mean(dim=1)
+        
+        mlp_vector = torch.cat([user_embedding_mlp, item_embedding_mlp, weighted_emotion_embedding, review_embeddings], dim=-1)
+        
         for layer in self.mlp:
             mlp_vector = layer(mlp_vector)
         
@@ -68,3 +76,9 @@ class NCF(nn.Module):
         prediction = self.final(combined)
         
         return prediction.squeeze()
+
+    def loss(self, prediction, target, gamma=2.0):
+        loss = F.mse_loss(prediction, target, reduction='none')
+        pt = torch.exp(-loss)  # Probability of the prediction
+        focal_loss = ((1 - pt) ** gamma) * loss
+        return focal_loss.mean()
