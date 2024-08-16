@@ -1,0 +1,5 @@
+*.csv
+*.npy
+*.npz
+*.pth
+\__pycache__
