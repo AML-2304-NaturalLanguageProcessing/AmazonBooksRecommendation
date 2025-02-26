@@ -25,7 +25,7 @@ The primary goal of this project is to develop a recommendation system that not 
 - **Programming Language**: Python
 - **Framework**: PyTorch for deep learning and model training
 - **Data Processing**: NumPy and SciPy for efficient handling of datasets
-- **Feature Engineering**: Embedding techniques for emotions and text reviews
+- **Feature Engineering**: Fined Tuned BERT Embedding techniques for emotions and text reviews
 
 ## Why This Project?
 
